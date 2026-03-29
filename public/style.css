@@ -1,0 +1,43 @@
+.page { display: none; }
+.page.active { display: block; }
+
+body.not-authenticated .role-logged-in { display: none !important; }
+body.authenticated .role-logged-out { display: none !important; }
+
+.role-admin { display: none; }
+
+body.is-admin .dropdown-menu .role-admin { display: list-item; }
+
+body.is-admin table .role-admin { display: table-cell; }
+
+.status-col {
+  min-width: 360px;
+  width: 360px;
+  white-space: nowrap;
+}
+
+.status-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.req-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.req-actions .btn {
+  padding: 4px 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.dropdown-menu .dropdown-item {
+  white-space: nowrap;
+}
