@@ -5,7 +5,6 @@ import { errorHandler } from './_middleware/errorHandler';
 import { initialize } from './_helpers/db';
 import usersController from '../src/users/user.controller';
 
-
 const app: Application = express();
 
 app.use(express.json());

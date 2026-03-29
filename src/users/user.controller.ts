@@ -10,7 +10,10 @@ router.get('/:id', getById);
 router.post('/', createSchema, create);
 router.put('/:id', updateSchema, update);
 router.delete('/:id', _delete);
+<<<<<<< HEAD
 router.post('/authenticate', authenticate);
+=======
+>>>>>>> second_repo/main
 
 export default router;
 
@@ -31,12 +34,15 @@ async function getById(req: Request, res: Response, next: NextFunction) {
         next(err);
     }
 }
+<<<<<<< HEAD
 function authenticate(req: Request, res: Response, next: NextFunction) {
     userService.authenticate(req.body)
         .then(user => res.json(user))
         .catch(next);
 }
 
+=======
+>>>>>>> second_repo/main
 
 function createSchema(req: Request, res: Response, next: NextFunction) {
     const schema = Joi.object({

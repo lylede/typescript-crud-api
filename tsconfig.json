@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
         "types": ["node"],
+=======
+>>>>>>> second_repo/main
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
@@ -15,8 +18,12 @@
     "paths": {
       "_helpers/*": ["_helpers/*"],
       "_middleware/*": ["_middleware/*"],
+<<<<<<< HEAD
       "users/*": ["users/*"],
       "departments/*": ["departments/*"]
+=======
+      "users/*": ["users/*"]
+>>>>>>> second_repo/main
     }
   },
   "include": ["src/**/*", "_helper"],

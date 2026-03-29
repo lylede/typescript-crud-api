@@ -2,13 +2,17 @@ import bcrypt from 'bcryptjs';
 import { db } from '../_helpers/db';
 import { Role } from '../_helpers/role';
 import { User, UserCreationAttributes } from './user.model';
+<<<<<<< HEAD
 import jwt from 'jsonwebtoken';
+=======
+>>>>>>> second_repo/main
 
 export const userService = {
     getAll,
     getById,
     create,
     update,
+<<<<<<< HEAD
     delete: _delete,
     authenticate
 };
@@ -31,6 +35,11 @@ async function authenticate({ email, password }: any) {
     };
 }
 
+=======
+    delete: _delete
+};
+
+>>>>>>> second_repo/main
 async function getAll(): Promise<User[]> {
     return await db.User.findAll();
 }
@@ -74,4 +83,8 @@ async function getUser(id: number): Promise<User> {
     const user = await db.User.scope('withHash').findByPk(id);
     if (!user) throw new Error('User not found');
     return user;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> second_repo/main
