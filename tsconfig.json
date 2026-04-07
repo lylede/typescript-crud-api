@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-        "types": ["node"],
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
@@ -11,14 +10,15 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "baseUrl": "./src",
+    "baseUrl": "../src",
     "paths": {
       "_helpers/*": ["_helpers/*"],
       "_middleware/*": ["_middleware/*"],
       "users/*": ["users/*"],
-      "departments/*": ["departments/*"]
+        "departments/*": ["departments/*"],
+        "employees/*": ["employees/*"]
     }
   },
-  "include": ["src/**/*", "_helper"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

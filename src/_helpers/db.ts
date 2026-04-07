@@ -5,10 +5,15 @@ import { Sequelize } from 'sequelize';
 // MODELS
 
 import UserModel, { User } from '../users/user.model';
+import DepartmentModel from "../departments/department.model";
+
+
 
 // DATABASE INTERFACE
 export interface Database {
     User: typeof User;
+    Department: any;
+
 }
 
 export const db: Database = {} as Database;
@@ -29,7 +34,10 @@ export async function initialize(): Promise<void> {
 
     // INIT MODELS
     db.User = UserModel(sequelize);
+    db.Department = DepartmentModel(sequelize);
 
+
+    
     // 🔥 OPTIONAL (for future relations)
     // db.Department.hasMany(db.User, { foreignKey: 'departmentId' });
 
