@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+        "types": ["node"],
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
@@ -15,10 +16,11 @@
       "_helpers/*": ["_helpers/*"],
       "_middleware/*": ["_middleware/*"],
       "users/*": ["users/*"],
-        "departments/*": ["departments/*"],
-        "employees/*": ["employees/*"]
+      "departments/*": ["departments/*"],
+      "employees/*": ["employees/*"],
+      "requests/*": ["requests/*"],
     }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*", "_helper"],
   "exclude": ["node_modules", "dist"]
 }

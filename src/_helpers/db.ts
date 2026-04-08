@@ -7,12 +7,16 @@ import { Sequelize } from 'sequelize';
 import UserModel, { User } from '../users/user.model';
 import DepartmentModel from "../departments/department.model";
 import EmployeeModel from '../employees/employee.model';
+import RequestModel from '../requests/request.model';
+
 
 // DATABASE INTERFACE
 export interface Database {
     User: typeof User;
     Department: any;
     Employee: any;
+    Request: any;
+
 
 }
 
@@ -36,6 +40,7 @@ export async function initialize(): Promise<void> {
     db.User = UserModel(sequelize);
     db.Department = DepartmentModel(sequelize);
     db.Employee = EmployeeModel(sequelize);
+    db.Request = RequestModel(sequelize);
 
 
     // 🔥 OPTIONAL (for future relations)
