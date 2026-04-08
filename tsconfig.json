@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "baseUrl": "../src",
+    "baseUrl": "./src",
     "paths": {
       "_helpers/*": ["_helpers/*"],
       "_middleware/*": ["_middleware/*"],

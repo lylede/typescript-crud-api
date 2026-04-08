@@ -5,10 +5,12 @@ export interface DepartmentAttributes {
     id: number;
     name: string;
     description: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface DepartmentCreationAttributes
-    extends Optional<DepartmentAttributes, "id"> {}
+    extends Optional<DepartmentAttributes, "id" | "createdAt" | "updatedAt"> {}
 
 export class Department
     extends Model<DepartmentAttributes, DepartmentCreationAttributes>
@@ -17,9 +19,12 @@ export class Department
     public id!: number;
     public name!: string;
     public description!: string;
+
+    public readonly createdAt!: Date;
+    public readonly updatedAt!: Date;
 }
 
-export default function DepartmentModel(sequelize: Sequelize) {
+export default function DepartmentModel(sequelize: Sequelize): typeof Department {
     Department.init(
         {
             id: {
@@ -34,6 +39,14 @@ export default function DepartmentModel(sequelize: Sequelize) {
             description: {
                 type: DataTypes.STRING,
                 allowNull: false,
+            },
+            createdAt: {
+                type: DataTypes.DATE,
+                defaultValue: DataTypes.NOW,
+            },
+            updatedAt: {
+                type: DataTypes.DATE,
+                defaultValue: DataTypes.NOW,
             },
         },
         {

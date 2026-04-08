@@ -6,13 +6,13 @@ import { Sequelize } from 'sequelize';
 
 import UserModel, { User } from '../users/user.model';
 import DepartmentModel from "../departments/department.model";
-
-
+import EmployeeModel from '../employees/employee.model';
 
 // DATABASE INTERFACE
 export interface Database {
     User: typeof User;
     Department: any;
+    Employee: any;
 
 }
 
@@ -35,9 +35,9 @@ export async function initialize(): Promise<void> {
     // INIT MODELS
     db.User = UserModel(sequelize);
     db.Department = DepartmentModel(sequelize);
+    db.Employee = EmployeeModel(sequelize);
 
 
-    
     // 🔥 OPTIONAL (for future relations)
     // db.Department.hasMany(db.User, { foreignKey: 'departmentId' });
 
