@@ -6,7 +6,7 @@ import { initialize } from './_helpers/db';
 import usersController from '../src/users/user.controller';
 import departmentController from './departments/department.controller';
 import employeeController from './employees/employee.controller';
-import requestController from './employees/employee.controller';
+import requestController from './requests/request.controller';
 
 
 const app: Application = express();

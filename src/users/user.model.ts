@@ -54,7 +54,7 @@ export default function (sequelize: Sequelize): typeof User {
             },
             title: {
                 type: DataTypes.STRING,
-                allowNull: false
+                allowNull: true
             },
             firstName: {
                 type: DataTypes.STRING,

@@ -19,6 +19,16 @@ async function getById(id: number) {
 }
 
 async function create(params: any) {
+
+    // 🔥 CHECK IF USER EXISTS
+    const user = await db.User.findOne({
+        where: { email: params.email }
+    });
+
+    if (!user) {
+        throw "User email does not exist. Please register first.";
+    }
+
     return await db.Employee.create(params);
 }
 

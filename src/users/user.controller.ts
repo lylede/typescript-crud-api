@@ -42,7 +42,7 @@ function createSchema(req: Request, res: Response, next: NextFunction) {
     const schema = Joi.object({
         email: Joi.string().email().required(),
         password: Joi.string().min(6).required(),
-        title: Joi.string().required(),
+        title: Joi.string().optional(),
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
         role: Joi.string().valid('Admin', 'User')

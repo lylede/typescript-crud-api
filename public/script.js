@@ -127,34 +127,48 @@ function handleRouting() {
   if (hash === "#/departments") renderDepartmentsTable(document.getElementById("departmentsSearch")?.value || "");
   if (hash === "#/employees") {
     renderDepartmentDropdown();
+    loadEmployees();
+    loadDepartmentsDropdown();
+    loadUsersDropdown();
     renderEmployeesTable(document.getElementById("employeesSearch")?.value || "");
   }
   if (hash === "#/requests") renderMyRequests();
 }
 
 /* ---------------- Auth ---------------- */
-function registerAccount({ firstName, lastName, email, password }) {
-  const e = normalizeEmail(email);
+async function registerAccount({ firstName, lastName, email, password }) {
 
-  if (findAccountByEmail(e)) {
-    showToast("Email already exists.", "danger");
-    return;
+  try {
+    const res = await fetch("http://localhost:4000/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        password,
+        role: "User" // default role
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      showToast("Account registered successfully!", "success");
+
+      // redirect to login
+      window.location.hash = "#/login";
+
+    } else {
+      showToast(data.message || "Registration failed", "danger");
+    }
+
+  } catch (err) {
+    console.error(err);
+    showToast("Server error", "danger");
   }
-
-  window.db.accounts.push({
-    id: crypto.randomUUID(),
-    firstName: firstName.trim(),
-    lastName: lastName.trim(),
-    email: e,
-    password,
-    role: "user",
-    verified: false
-  });
-
-  saveDB();
-  localStorage.setItem("unverified_email", e);
-  showToast("Account created! Please verify email.", "success");
-  navigateTo("#/verify-email");
 }
 
 function simulateVerifyEmail() {
@@ -234,6 +248,44 @@ function seedAdminIfEmpty() {
   saveDB();
 }
 
+async function loadUsersDropdown() {
+  const select = document.getElementById("employeeUserSelect");
+
+  const res = await fetch("http://localhost:4000/users");
+  const users = await res.json();
+
+  select.innerHTML = `<option value="">Select User</option>` +
+    users.map(u => `
+      <option value="${u.email}">
+        ${u.firstName} ${u.lastName} (${u.email})
+      </option>
+    `).join("");
+}
+
+async function loadDepartmentsDropdown() {
+  try {
+    const res = await fetch("http://localhost:4000/departments");
+    const data = await res.json();
+
+    const select = document.getElementById("employeeDeptSelect");
+
+    if (!select) return;
+
+    // 🔥 CLEAR FIRST
+    select.innerHTML = `<option value="">-- Select Department --</option>`;
+
+    data.forEach(d => {
+      select.innerHTML += `
+        <option value="${d.id}">
+          ${d.name}
+        </option>
+      `;
+    });
+
+  } catch (err) {
+    console.error("Dropdown error:", err);
+  }
+}
 function seedDepartmentsIfEmpty() {
   if (window.db.departments.length > 0) return;
 
@@ -246,38 +298,31 @@ function seedDepartmentsIfEmpty() {
 }
 
 /* ---------------- Accounts CRUD ---------------- */
-function renderAccountsTable(filterText = "") {
+async function renderAccountsTable() {
   const tbody = document.getElementById("accountsTbody");
   if (!tbody) return;
 
-  const q = String(filterText || "").toLowerCase();
-  const list = window.db.accounts.filter(acc => {
-    const fullName = `${acc.firstName} ${acc.lastName}`.toLowerCase();
-    return fullName.includes(q) || acc.email.toLowerCase().includes(q) || String(acc.role).toLowerCase().includes(q);
+ const res = await fetch("http://localhost:4000/users");
+const users = await res.json();
+
+tbody.innerHTML = users.map(u => `
+  <tr>
+    <td>${u.firstName} ${u.lastName}</td>
+    <td>${u.email}</td>
+    <td>${u.role}</td>
+    <td>✓</td>
+    <td>
+      <button onclick="deleteUser(${u.id})">Delete</button>
+    </td>
+  </tr>
+`).join("");
+}
+
+async function deleteUser(id) {
+  await fetch(`http://localhost:4000/users/${id}`, {
+    method: "DELETE"
   });
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-muted">No accounts found.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = list.map(acc => {
-    const fullName = `${acc.firstName} ${acc.lastName}`;
-    const verifiedText = acc.verified ? "✓" : "—";
-
-    return `
-      <tr>
-        <td>${fullName}</td>
-        <td>${acc.email}</td>
-        <td>${acc.role}</td>
-        <td>${verifiedText}</td>
-        <td>
-          <button class="btn btn-sm btn-outline-primary me-1" data-action="edit" data-id="${acc.id}">Edit</button>
-          <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${acc.id}">Delete</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
+  renderAccountsTable();
 }
 
 function openAccountModal(mode, account = null) {
@@ -303,6 +348,18 @@ function openAccountModal(mode, account = null) {
 }
 
 function saveAccountFromForm(fd) {
+  // 🔥 SEND TO BACKEND
+  fetch("http://localhost:4000/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      firstName: fd.get("firstName"),
+      lastName: fd.get("lastName"),
+      email: fd.get("email"),
+      password: fd.get("password"),
+      role: fd.get("role")
+    })
+  }).then(() => renderAccountsTable());
   const id = fd.get("id");
   const firstName = fd.get("firstName").trim();
   const lastName = fd.get("lastName").trim();
@@ -390,18 +447,14 @@ async function renderDepartmentsTable() {
 
   try {
     const res = await fetch("http://localhost:4000/departments");
-    const departments = await res.json();
+    const data = await res.json();
 
-    if (departments.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3">No departments found</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = departments.map(d => `
+    tbody.innerHTML = data.map(d => `
       <tr>
         <td>${d.name}</td>
+        <td>${d.description || ""}</td>
         <td>
-          <button class="btn btn-sm btn-danger" onclick="deleteDepartment(${d.id})">Delete</button>
+          <button onclick="deleteDepartment(${d.id})">Delete</button>
         </td>
       </tr>
     `).join("");
@@ -412,10 +465,16 @@ async function renderDepartmentsTable() {
   }
 }
 
-function renderDepartmentDropdown() {
+async function renderDepartmentDropdown() {
   const sel = document.getElementById("employeeDeptSelect");
   if (!sel) return;
-  sel.innerHTML = window.db.departments.map(d => `<option value="${d.id}">${d.name}</option>`).join("");
+
+  const res = await fetch("http://localhost:4000/departments");
+  const departments = await res.json();
+
+  sel.innerHTML = departments.map(d =>
+    `<option value="${d.id}">${d.name}</option>`
+  ).join("");
 }
 
 function renderEmployeeModalDeptDropdown(selectedId = null) {
@@ -446,6 +505,7 @@ function openDepartmentModal(mode, dept = null) {
 
 async function saveDepartmentFromForm(fd) {
   const name = fd.get("name");
+  const description = fd.get("description");
 
   try {
     await fetch("http://localhost:4000/departments", {
@@ -453,7 +513,7 @@ async function saveDepartmentFromForm(fd) {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ name })
+      body: JSON.stringify({ name, description })
     });
 
     showToast("Department added!", "success");
@@ -487,68 +547,65 @@ async function deleteDepartment(id) {
 }
 
 /* ---------------- Employees CRUD ---------------- */
-function renderEmployeesTable(filterText = "") {
+async function renderEmployeesTable() {
   const tbody = document.getElementById("employeesTbody");
   if (!tbody) return;
 
-  const q = String(filterText || "").toLowerCase();
+  const res = await fetch("http://localhost:4000/employees");
+  const employees = await res.json();
 
-  const list = window.db.employees.filter(emp => {
-    const user = window.db.accounts.find(a => a.id === emp.userId);
-    const dept = window.db.departments.find(d => d.id === emp.deptId);
-    const blob = [emp.empId, user?.email || "", emp.position, dept?.name || "", emp.hireDate].join(" ").toLowerCase();
-    return blob.includes(q);
-  });
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-muted">No employees found.</td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = list.map(emp => {
-    const user = window.db.accounts.find(a => a.id === emp.userId);
-    const dept = window.db.departments.find(d => d.id === emp.deptId);
-
-    return `
-      <tr>
-        <td>${emp.empId}</td>
-        <td>${user ? user.email : "—"}</td>
-        <td>${emp.position}</td>
-        <td>${dept ? dept.name : "—"}</td>
-        <td>${emp.hireDate}</td>
-        <td>
-          <button class="btn btn-sm btn-outline-primary me-1" data-empedit="${emp.id}">Edit</button>
-          <button class="btn btn-sm btn-outline-danger" data-empdel="${emp.id}">Delete</button>
-        </td>
-      </tr>
-    `;
-  }).join("");
+  tbody.innerHTML = employees.map(e => `
+    <tr>
+      <td>${e.employeeId}</td>
+      <td>${e.email}</td>
+      <td>${e.position}</td>
+      <td>${e.departmentId}</td>
+      <td>${new Date(e.hireDate).toLocaleDateString()}</td>
+      <td>
+        <button onclick="deleteEmployee(${e.id})" class="btn btn-sm btn-danger">
+          Delete
+        </button>
+      </td>
+    </tr>
+  `).join("");
 }
 
-function addEmployee({ empId, userEmail, position, deptId, hireDate }) {
-  if (window.db.employees.some(e => e.empId === empId)) {
-    showToast("Employee ID already exists.", "danger");
-    return;
-  }
+async function deleteEmployee(id) {
+  const ok = confirm("Delete this employee?");
+  if (!ok) return;
 
-  const user = findAccountByEmail(userEmail);
-  if (!user) {
-    showToast("User Email must match an existing account.", "danger");
-    return;
-  }
-
-  window.db.employees.push({
-    id: crypto.randomUUID(),
-    empId,
-    userId: user.id,
-    deptId,
-    position,
-    hireDate
+  await fetch(`http://localhost:4000/employees/${id}`, {
+    method: "DELETE"
   });
 
-  saveDB();
-  renderEmployeesTable(document.getElementById("employeesSearch")?.value || "");
-  showToast("Employee added!", "success");
+  renderEmployeesTable(); // 🔥 refresh
+}
+
+async function addEmployee({ empId, userEmail, position, deptId, hireDate }) {
+
+  try {
+    await fetch("http://localhost:4000/employees", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        employeeId: empId,
+        email: userEmail,
+        position,
+        departmentId: deptId,
+        hireDate
+      })
+    });
+
+    showToast("Employee added!", "success");
+
+    renderEmployeesTable(); // 🔥 reload table
+
+  } catch (err) {
+    console.error(err);
+    showToast("Error adding employee", "danger");
+  }
 }
 
 function openEmployeeModal(emp) {
@@ -654,90 +711,108 @@ function collectItemsFromModal() {
   }).filter(it => it.name.length > 0 && it.qty >= 1);
 }
 
-function submitRequest(type, items) {
-  if (!items || items.length === 0) {
-    showToast("Please add at least one item.", "danger");
-    return false;
-  }
-
-  window.db.requests.push({
-    id: crypto.randomUUID(),
-    type,
-    items,
-    status: "Pending",
-    date: new Date().toLocaleDateString(),
-    employeeEmail: currentUser.email
+async function submitRequest(type, items) {
+  await fetch("http://localhost:4000/requests", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      title: type,
+      description: JSON.stringify(items),
+      status: "Pending",
+    })
   });
 
-  saveDB();
-  renderMyRequests();
-  showToast("Request submitted!", "success");
-  return true;
-}
+  showToast("Request submitted", "success");
 
+  renderMyRequests(); // ✅ IMPORTANT
+}
 /**
  * USER: sees only their requests (no actions)
  * ADMIN: sees all requests + approve/reject/delete (buttons inside Status)
  */
-function renderMyRequests() {
+async function renderMyRequests() {
   const tbody = document.getElementById("requestsTbody");
   if (!tbody) return;
-  if (!currentUser) { tbody.innerHTML = ""; return; }
 
-  const isAdmin = currentUser.role === "admin";
-  const q = String(document.getElementById("requestsSearch")?.value || "").toLowerCase();
+  
+  const res = await fetch("http://localhost:4000/requests");
+  const data = await res.json();
 
-  const baseList = isAdmin
-    ? window.db.requests
-    : window.db.requests.filter(r => r.employeeEmail === currentUser.email);
-
-  const list = baseList.filter(r => {
-    const blob = [
-      r.date,
-      r.employeeEmail,
-      r.type,
-      r.status,
-      r.items.map(it => `${it.name} ${it.qty}`).join(" ")
-    ].join(" ").toLowerCase();
-    return blob.includes(q);
-  });
-
-  const colspan = isAdmin ? 5 : 4;
-
-  if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-muted">No requests found.</td></tr>`;
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5">No requests found</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = list.map(r => {
-    const itemsText = r.items.map(it => `${it.name} (x${it.qty})`).join(", ");
-    const emailCell = isAdmin ? `<td>${r.employeeEmail}</td>` : ``;
+  tbody.innerHTML = data.map(r => {
 
-    const statusCell = isAdmin ? `
-      <td class="text-center align-middle">
-        <div class="status-wrap">
-          ${statusBadge(r.status)}
-          <div class="req-actions">
-            <button class="btn btn-sm btn-outline-success" data-reqact="approve" data-id="${r.id}">Approve</button>
-            <button class="btn btn-sm btn-outline-danger" data-reqact="reject" data-id="${r.id}">Reject</button>
-            <button class="btn btn-sm btn-outline-secondary" data-reqact="delete" data-id="${r.id}">Delete</button>
-          </div>
-        </div>
-      </td>
-    ` : `
-      <td class="text-center align-middle">${statusBadge(r.status)}</td>
-    `;
+    // ✅ FIX ITEMS
+    let itemsText = "";
+    try {
+      const items = JSON.parse(r.description || "[]")
+
+      itemsText = items.map(i => `${i.name} (x${i.qty})`).join(", ");
+    } catch {
+      itemsText = "Invalid items";
+    }
+
+    // ✅ FIX DATE
+    const date = r.createdAt
+      ? new Date(r.createdAt).toLocaleDateString()
+      : "";
 
     return `
       <tr>
-        <td>${r.date}</td>
-        ${emailCell}
+        <td>${date}</td>
+        <td>${r.userEmail || "-"}</td>
         <td>${r.type}</td>
         <td>${itemsText}</td>
-        ${statusCell}
+        <td>
+         ${statusBadge(r.status)}
+  
+          ${currentUser?.role === "Admin" ? `
+            <div class="mt-1">
+              <button onclick="approveRequest(${r.id})" class="btn btn-sm btn-success">Approve</button>
+              <button onclick="rejectRequest(${r.id})" class="btn btn-sm btn-danger">Reject</button>
+              <button onclick="deleteRequest(${r.id})" class="btn btn-sm btn-dark">Delete</button>
+            </div>
+        ` : ""}
+        </td>
       </tr>
     `;
   }).join("");
+}
+
+async function approveRequest(id) {
+  await fetch(`http://localhost:4000/requests/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "Approved" })
+  });
+
+  renderMyRequests();
+}
+
+async function rejectRequest(id) {
+  await fetch(`http://localhost:4000/requests/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "Rejected" })
+  });
+
+  renderMyRequests();
+}
+
+async function deleteRequest(id) {
+  const ok = confirm("Delete this request?");
+  if (!ok) return;
+
+  await fetch(`http://localhost:4000/requests/${id}`, {
+    method: "DELETE"
+  });
+
+  renderMyRequests();
 }
 
 /* ---------------- Init + Events ---------------- */

@@ -6,8 +6,13 @@ import { departmentService } from "../departments/department.service";
 const router = Router();
 
 // GET ALL
-router.get("/", (req, res) => {
-    res.json({ message: "Departments working ✅" });
+router.get("/", async (req, res, next) => {
+    try {
+        const data = await departmentService.getAll();
+        res.json(data);
+    } catch (err) {
+        next(err);
+    }
 });
 
 // GET BY ID
